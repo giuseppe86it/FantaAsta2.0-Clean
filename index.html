@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FantaAsta 2.0">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.7.0.0">
+  <title>FantaAsta2.0</title>
+</head>
+<body>
+  <div id="lock" class="lock hidden">
+    <div class="lock-card">
+      <div class="eyebrow">Accesso protetto</div><h1>FantaAsta 2.0</h1>
+      <p id="lockText">Inserisci il PIN.</p>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
+      <button id="unlockBtn" class="primary">Sblocca</button>
+      <button id="disablePinBtn" class="ghost">Disattiva PIN</button>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">FantaAsta2.0 · A7.0.0 · GESTIONE ASTA LOCALE</div>
+      <h1>FantaAsta 2.0</h1>
+    </div>
+    <div class="topbar-actions">
+      <button id="backupAlertBtn" class="backup-alert-btn" type="button" aria-label="Backup consigliato" hidden>BACKUP</button>
+      <button id="settingsBtn" class="icon-btn hybrid-settings" type="button" aria-label="Impostazioni" aria-controls="settingsView">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 9.2 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 0 0 3.8 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2v-4h.1A1.7 1.7 0 0 0 3.2 9.2a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06L6.26 3.4l.06.06A1.7 1.7 0 0 0 8.2 3.8a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2h4v.1a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.86 2.86-.06.06A1.7 1.7 0 0 0 19.4 8.2c.16.38.36.72.6 1 .3.34.7.52 1.1.4h.1v4h-.1a1.7 1.7 0 0 0-1.1.4c-.24.28-.44.62-.6 1Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="app">
+    <section id="dashboardView" class="view active"></section>
+    <section id="playersView" class="view"></section>
+    <section id="squadView" class="view"></section>
+    <section id="strategyView" class="view"></section>
+    <section id="leagueView" class="view"></section>
+    <section id="settingsView" class="view"></section>
+  </main>
+
+  <nav class="tabbar hybrid-tabbar" aria-label="Navigazione principale">
+    <button type="button" data-view="dashboardView" class="tab active" aria-current="page"><span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg></span><small>Dashboard</small></button>
+    <button type="button" data-view="playersView" class="tab"><span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-4 2.5-6 5.5-6s5 2 5.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M15 14c3.5-.2 5.2 1.6 5.5 5"/></svg></span><small>Giocatori</small></button>
+    <button type="button" data-view="squadView" class="tab"><span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.8 3 8 7.5 9.5 4.5-1.5 7.5-4.7 7.5-9.5V6L12 3Z"/></svg></span><small>Rosa</small></button>
+    <button type="button" data-view="strategyView" class="tab"><span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4"/><circle cx="12" cy="12" r="3"/></svg></span><small>Strategia</small></button>
+    <button type="button" data-view="leagueView" class="tab"><span class="tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v3c0 3-1.8 5-4 5s-4-2-4-5V4Z"/><path d="M8 6H5v1c0 2 1.3 3.5 3.5 3.8M16 6h3v1c0 2-1.3 3.5-3.5 3.8M12 12v4M8.5 20h7M10 16h4v4h-4z"/></svg></span><small>Leghe</small></button>
+  </nav>
+
+  <dialog id="playerDialog" aria-label="Scheda giocatore">
+    <div id="playerDialogContent"></div>
+  </dialog>
+
+  <dialog id="clubFilterDialog" aria-label="Filtro squadre">
+    <div id="clubFilterDialogContent"></div>
+  </dialog>
+
+  <dialog id="listoneSyncDialog" aria-label="Importazione listone locale">
+    <div id="listoneSyncDialogContent"></div>
+  </dialog>
+  <input id="listoneLocalFileInput" type="file" accept=".csv,.json,text/csv,application/json" hidden>
+
+  <input id="leagueRosterCsvInput" type="file" accept=".csv,text/csv" hidden>
+  <dialog id="rosterImportDialog" aria-label="Importazione o esportazione rose">
+    <div id="rosterImportDialogContent"></div>
+  </dialog>
+
+  <dialog id="fa2SlotDialog" aria-label="Analisi slot strategico">
+    <div id="fa2SlotDialogContent"></div>
+  </dialog>
+
+
+  <dialog id="liveDialog" aria-label="Asta Live">
+    <div id="liveDialogContent"></div>
+  </dialog>
+
+
+  <dialog id="leagueDialog" aria-labelledby="leagueDialogTitle">
+    <form id="leagueForm">
+      <h2 id="leagueDialogTitle">Crea lega</h2>
+      <label>Nome lega
+        <input id="leagueNameInput" type="text" maxlength="40" placeholder="Es. Fanta Amici 26/27" required>
+      </label>
+      <label>Numero partecipanti
+        <select id="leagueSizeInput" required>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+        </select>
+      </label>
+      <p class="muted dialog-note">La prima squadra sarà la tua rosa. Potrai rinominare tutte le squadre dopo la creazione.</p>
+      <div class="dialog-actions">
+        <button type="button" id="cancelLeagueCreate" class="ghost">Annulla</button>
+        <button type="submit" class="primary">Crea lega</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="soldDialog" aria-labelledby="soldTitle">
+    <form id="soldForm">
+      <h2 id="soldTitle">Giocatore venduto</h2>
+      <label>Squadra
+        <select id="soldTeamSelect"></select>
+      </label>
+      <label>Prezzo pagato
+        <input id="soldPriceInput" type="number" min="1" step="1" inputmode="numeric" required>
+      </label>
+      <p id="soldLeagueNote" class="muted dialog-note"></p>
+      <div class="dialog-actions">
+        <button type="button" id="cancelSold" class="ghost">Annulla</button>
+        <button type="submit" class="soldbtn">Conferma venduto</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="safetyDialog" aria-label="Sicurezza e controllo">
+    <div id="safetyDialogContent"></div>
+  </dialog>
+
+  <dialog id="purchaseDialog" aria-labelledby="purchaseTitle">
+    <form method="dialog" id="purchaseForm">
+      <h2 id="purchaseTitle">Acquista</h2>
+      <label>Prezzo pagato
+        <input id="purchasePrice" type="number" min="1" step="1" inputmode="numeric" required>
+      </label>
+      <div id="purchaseEconomicInfo" class="purchase-economic-info"></div>
+      <div id="purchaseSignal" class="signal"></div>
+      <div class="dialog-actions">
+        <button type="button" id="cancelPurchase" class="ghost"
+          onclick="if(document.activeElement)document.activeElement.blur();const d=this.closest('dialog');if(d&&d.open)d.close();document.getElementById('purchasePrice').value='';document.getElementById('purchaseSignal').textContent='';return false;">Annulla</button>
+        <button id="confirmPurchase" value="default" class="primary">Conferma</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="regulation-engine.js?v=2.0.0-alpha.7.0.0"></script>
+  <script src="strategy-engine.js?v=2.0.0-alpha.7.0.0"></script>
+  <script src="opponent-intelligence-engine.js?v=2.0.0-alpha.7.0.0"></script>
+  <script src="listone-importer.js?v=2.0.0-alpha.7.0.0"></script>
+  <script src="mantra-rules.js?v=2.0.0-alpha.7.0.0"></script>
+  <script src="app.js?v=2.0.0-alpha.7.0.0"></script>
+</body>
+</html>
