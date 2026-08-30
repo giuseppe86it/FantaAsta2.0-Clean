@@ -99,13 +99,20 @@ function birthDateLabel(p){
   return `${day}/${m}/${y}`;
 }
 function validMantraRole(role){
-  const allowed=new Set(["Por","Dd","Ds","Dc","B","E","M","C","W","T","A","Pc"]);
-  const tokens=String(role||"").split("/").filter(Boolean);
+  const allowed=new Set(Object.keys(window.FA2MantraRules?.ROLE_META||{Por:1,Dd:1,Ds:1,Dc:1,B:1,E:1,M:1,C:1,W:1,T:1,A:1,Pc:1}));
+  const tokens=window.FA2MantraRules?.normalizeRoleTokens?.(role)||String(role||"").split("/").filter(Boolean);
   return tokens.length>0 && tokens.every(x=>allowed.has(x));
 }
 function normalizeMantraRoleInput(value){
+  if(window.FA2ListoneImporter?.normalizeRole)return window.FA2ListoneImporter.normalizeRole(value);
   const canonical={por:"Por",dd:"Dd",ds:"Ds",dc:"Dc",b:"B",e:"E",m:"M",c:"C",w:"W",t:"T",a:"A",pc:"Pc"};
-  return String(value||"").split("/").map(token=>canonical[token.trim().toLowerCase()]||token.trim()).filter(Boolean).join("/");
+  return String(value||"").split(/[\/;]+/).map(token=>canonical[token.trim().toLowerCase()]||token.trim()).filter(Boolean).join("/");
+}
+function mantraRoleDisplay(value){return window.FA2MantraRules?.displayRole?.(value)||String(value||"—")}
+function mantraRoleTone(value){return window.FA2MantraRules?.toneClass?.(value)||"role-tone-neutral"}
+function mantraRoleAccessibleLabel(value){return window.FA2MantraRules?.accessibleRoleLabel?.(value)||`Ruolo ${String(value||"non disponibile")}`}
+function mantraRoleChipHTML(value,className="mantra-role-chip"){
+  return `<span class="${escAttr(className)} ${escAttr(mantraRoleTone(value))}" aria-label="${escAttr(mantraRoleAccessibleLabel(value))}">${esc(mantraRoleDisplay(value))}</span>`;
 }
 function localField(value,max=80){
   return String(value??"").replace(/[<>\u0000-\u001f\u007f]/g," ").replace(/\s+/g," ").trim().slice(0,max);
@@ -2189,7 +2196,7 @@ function clubCounterHTML(bought){
 function formationBroadGroup(role){
   const tokens=String(role||"").split("/").map(x=>x.trim()).filter(Boolean);
   if(tokens.includes("Por")) return "POR";
-  if(tokens.some(r=>["W","A","Pc"].includes(r))) return "ATT";
+  if(tokens.some(r=>["W","T","A","Pc"].includes(r))) return "ATT";
   if(tokens.some(r=>["B","Ds","Dc","Dd"].includes(r))) return "DIF";
   return "CEN";
 }
@@ -2249,7 +2256,7 @@ function formationListCardHTML(f,index,showSetPieces=true){
     <div class="formation-role-list">
       ${["POR","DIF","CEN","ATT"].map(group=>`<div class="formation-role-row formation-role-${group.toLowerCase()}">
         <div class="formation-role-label">${labels[group]}</div><div class="formation-role-players">
-          ${groups[group].map(p=>{const pr=Number(p.probability||starterProbability(formationPlayerCandidate(p.name,f.club)).prob);const st=starterStatus(pr);return `<span class="formation-name-chip"><span class="formation-chip-text"><b>${esc(p.name)}</b><em>${esc(p.role)}</em></span><small class="starter-prob ${st.cls}">${Math.round(pr)}%</small></span>`}).join("")||`<span class="formation-empty">—</span>`}
+          ${groups[group].map(p=>{const pr=Number(p.probability||starterProbability(formationPlayerCandidate(p.name,f.club)).prob);const st=starterStatus(pr);return `<span class="formation-name-chip"><span class="formation-chip-text"><b>${esc(p.name)}</b><em>${esc(mantraRoleDisplay(p.role))}</em></span><small class="starter-prob ${st.cls}">${Math.round(pr)}%</small></span>`}).join("")||`<span class="formation-empty">—</span>`}
         </div></div>`).join("")}
     </div>
     ${bench.length?`<div class="formation-ballottaggi"><b>Alternative / ballottaggi</b><div>${bench.map(x=>`<span>${esc(x.name)} <strong>${Math.round(Number(x.probability||0))}%</strong></span>`).join("")}</div></div>`:""}
@@ -2349,7 +2356,7 @@ window.openFormation=index=>{
     ${["POR","DIF","CEN","ATT"].map(group=>`<section class="formation-detail-section formation-detail-${group.toLowerCase()}">
       <div class="formation-detail-section-head"><span>${groupLabels[group]}</span><strong>${groups[group].length}</strong></div>
       <div class="formation-detail-players">
-        ${groups[group].map(p=>{const pr=Number(p.probability||starterProbability(formationPlayerCandidate(p.name,f.club)).prob);const st=starterStatus(pr);return `<div class="formation-detail-player"><span class="formation-detail-role">${esc(p.role)}</span><span class="formation-detail-copy"><b>${esc(p.name)}</b>${disciplineCountersHTML(p.name,f.club)}</span><small class="starter-prob ${st.cls}">${Math.round(pr)}%</small></div>`}).join("")||'<div class="formation-detail-empty">—</div>'}
+        ${groups[group].map(p=>{const pr=Number(p.probability||starterProbability(formationPlayerCandidate(p.name,f.club)).prob);const st=starterStatus(pr);return `<div class="formation-detail-player">${mantraRoleChipHTML(p.role,"formation-detail-role mantra-role-chip")}<span class="formation-detail-copy"><b>${esc(p.name)}</b>${disciplineCountersHTML(p.name,f.club)}</span><small class="starter-prob ${st.cls}">${Math.round(pr)}%</small></div>`}).join("")||'<div class="formation-detail-empty">—</div>'}
       </div>
     </section>`).join("")}
   </div>`;
@@ -2906,32 +2913,8 @@ function closeListoneSyncDialog(){pendingListoneSnapshot=null;if($("#listoneSync
 window.closeListoneSyncDialog=closeListoneSyncDialog;
 
 function parseListoneDelimited(text){
-  const source=String(text||"").replace(/^\uFEFF/,"");
-  const first=(source.split(/\r?\n/,1)[0]||"");
-  const delimiter=[[";",(first.match(/;/g)||[]).length],[",",(first.match(/,/g)||[]).length],["\t",(first.match(/\t/g)||[]).length]].sort((a,b)=>b[1]-a[1])[0][0];
-  const rows=[];let row=[],cell="",quoted=false;
-  for(let i=0;i<source.length;i++){
-    const ch=source[i];
-    if(quoted){if(ch==='"'){if(source[i+1]==='"'){cell+='"';i++}else quoted=false}else cell+=ch;continue}
-    if(ch==='"'&&cell===""){quoted=true;continue}
-    if(ch===delimiter){row.push(cell);cell="";continue}
-    if(ch==="\n"){row.push(cell);rows.push(row);row=[];cell="";continue}
-    if(ch!=="\r")cell+=ch;
-  }
-  if(quoted)throw new Error("CSV non valido: virgolette non chiuse.");
-  if(cell!==""||row.length){row.push(cell);rows.push(row)}
-  const nonEmpty=rows.filter(values=>values.some(value=>String(value).trim()));
-  if(nonEmpty.length<2)throw new Error("CSV vuoto o privo di righe dati.");
-  const aliases={
-    name:["nome","name","giocatore","player","calciatore"],club:["club","squadra","team","societa"],
-    role:["ruolo","role","ruolomantra","mantra"],classic:["classic","ruoloclassic","ruoloclassico"],
-    quote:["quotazione","quote","quot"],fvm:["fvm","fvmantra"],
-    birthYear:["annonascita","birthyear"],active:["attivo","active"]
-  };
-  const header=nonEmpty[0].map(value=>normalizePlayerName(value));
-  const indexes={};Object.entries(aliases).forEach(([field,names])=>indexes[field]=header.findIndex(value=>names.includes(value)));
-  if(indexes.name<0||indexes.club<0||indexes.role<0)throw new Error("Intestazioni obbligatorie: nome, club, ruolo.");
-  return nonEmpty.slice(1).map(values=>Object.fromEntries(Object.entries(indexes).filter(([,index])=>index>=0).map(([field,index])=>[field,values[index]??""])));
+  if(!window.FA2ListoneImporter?.parseDelimited)throw new Error("Modulo di importazione listone non disponibile.");
+  return window.FA2ListoneImporter.parseDelimited(text);
 }
 function localListoneBoolean(value){return !["0","false","no","falso","n"].includes(String(value??"").trim().toLowerCase())}
 function normalizeLocalListoneSnapshot(raw,fileName="archivio-locale"){
@@ -2939,10 +2922,13 @@ function normalizeLocalListoneSnapshot(raw,fileName="archivio-locale"){
   if(!source||!Array.isArray(source.players))throw new Error("Il file non contiene un elenco di giocatori riconoscibile.");
   const errors=[],seen=new Set(),players=[];
   source.players.forEach((input,index)=>{
-    const name=localField(input?.name,80),club=localField(input?.club,24).toUpperCase(),role=normalizeMantraRoleInput(localField(input?.role,30));
+    const name=localField(input?.name,80),club=window.FA2ListoneImporter?.normalizeClub
+      ?window.FA2ListoneImporter.normalizeClub(localField(input?.club,24),SERIES_A_CLUBS)
+      :localField(input?.club,24).toUpperCase(),role=normalizeMantraRoleInput(localField(input?.role,30));
     const key=normalizePlayerName(name),active=input?.active===undefined?true:localListoneBoolean(input.active);
-    if(!name||!club||!validMantraRole(role)){errors.push(`Riga ${index+2}: nome, club o ruolo non valido.`);return}
-    if(seen.has(key)){errors.push(`Riga ${index+2}: giocatore duplicato (${name}).`);return}seen.add(key);
+    const sourceRow=Math.max(1,Number(input?._sourceRow)||index+2);
+    if(!name||!club||!validMantraRole(role)){errors.push(`Riga ${sourceRow}: nome, club o ruolo non valido.`);return}
+    if(seen.has(key)){errors.push(`Riga ${sourceRow}: giocatore duplicato (${name}).`);return}seen.add(key);
     const birthYear=Math.max(0,Math.round(Number(input?.birthYear)||0));
     players.push({id:localPlayerId(`${key}|${club}`),key,name,club,role,reparto:inferRepartoFromRole(role,input?.classic),
       classic:localField(input?.classic,4).toUpperCase(),quote:Math.max(0,Number(input?.quote)||0),fvm:Math.max(0,Number(input?.fvm)||0),
@@ -2986,7 +2972,7 @@ async function importLocalListoneFile(file){
     openListoneSyncDialog(`<div class="dialog-body listone-sync-dialog">
       <div class="listone-sync-modal-head"><div><span class="eyebrow">NESSUNA MODIFICA APPLICATA</span><h2>File non valido</h2></div><button class="ghost" type="button" aria-label="Chiudi importazione listone" onclick="closeListoneSyncDialog()">✕</button></div>
       <div class="listone-sync-warning">${esc(err?.message||"Il file non può essere letto.")}</div>
-      <p class="muted">Sono accettati CSV con intestazioni nome, club e ruolo, oppure JSON con un array players. I dati dell’app non sono stati modificati.</p>
+      <p class="muted">Sono accettati il CSV ufficiale con colonne Nome, Squadra, R e RM, il modello generico con nome, club e ruolo, oppure JSON con un array players. I dati dell’app non sono stati modificati.</p>
       <button class="primary full-btn" onclick="closeListoneSyncDialog()">Chiudi</button>
     </div>`);
   }
@@ -3025,7 +3011,7 @@ function playerRow(p){
           ${strategic?'<span class="badge strategic-badge">200</span>':'<span class="badge listone-badge">LISTONE</span>'}
           ${p.outOfListone?'<span class="badge out-listone-badge">FUORI LISTONE</span>':""}
         </h3>
-        <div class="meta">${p.club} · ${p.role} · ${p.tier||"—"}</div>
+        <div class="meta">${p.club} · ${mantraRoleDisplay(p.role)} · ${p.tier||"—"}</div>
         ${assignment.assigned?`<div class="player-assignment-line"><span>${assignment.mine?"MIA ROSA":"ASSEGNATO"}</span><b>${esc(assignment.teamName)}</b>${assignment.price>0?`<small>${fmt(assignment.price)} cr</small>`:""}</div>`:""}
         ${p.reparto==="ATT"&&primaryOffensiveRole(p)?`<span class="badge primary-role-badge">PRIM. ${primaryOffensiveRole(p)}</span>`:""}
         <span class="badge">FVM ${p.fvm||0}</span>
@@ -3437,7 +3423,7 @@ function openPlayer(id){
         : `<button class="primary" onclick='startPurchase(${idArg(p.id)})'>Acquista</button><button class="soldbtn" onclick='markSold(${idArg(p.id)})'>Venduto</button>`;
   $("#playerDialogContent").innerHTML=`<div class="dialog-body">
     <div class="section-title player-dialog-head">
-      <div class="player-dialog-title">${kitHTML(p.club,'dialog',p.club)}<div><div class="eyebrow">${p.club} · ${p.role} · ${strategic?"STRATEGICO":"LISTONE"}</div><h2>${playerNameHTML(p)}</h2></div></div>
+      <div class="player-dialog-title">${kitHTML(p.club,'dialog',p.club)}<div><div class="eyebrow">${p.club} · ${mantraRoleDisplay(p.role)} · ${strategic?"STRATEGICO":"LISTONE"}</div><h2>${playerNameHTML(p)}</h2></div></div>
       <div class="player-title-actions"><button type="button" class="watch-detail ${isWatchlisted(p.id)?"active":""}" aria-label="${isWatchlisted(p.id)?"Rimuovi":"Aggiungi"} ${escAttr(playerNameText(p))} ${isWatchlisted(p.id)?"dalla":"alla"} watchlist" aria-pressed="${isWatchlisted(p.id)?"true":"false"}" onclick='toggleWatchlist(${idArg(p.id)})'>${isWatchlisted(p.id)?"Seguito":"Segui"}</button><button type="button" class="ghost" aria-label="Chiudi scheda giocatore" onclick="playerDialog.close()">✕</button></div>
     </div>
     <div class="grid">
@@ -3449,7 +3435,7 @@ function openPlayer(id){
     <div class="dialog-actions player-quick-actions">${playerActions}</div>
     ${fa2PlayerPlanHTML(p)}
     <div class="card" style="margin-top:10px">
-      <div class="line"><span>Ruoli Mantra</span><b>${p.role}</b></div>
+      <div class="line"><span>Ruoli Mantra</span>${mantraRoleChipHTML(p.role)}</div>
       <div class="line"><span>Fascia</span><b>${p.tier||"—"}</b></div>
       ${strategic?`<div class="line"><span>Titolarità</span><b>${p.starter||"—"}</b></div>`:`<div class="line"><span>Dati</span><b>Listone completo</b></div>`}
       ${strategic?`<div class="line"><span>Rigori / piazzati</span><b>${p.setPieces||"—"}</b></div>`:""}
@@ -3734,7 +3720,7 @@ function rosterFormationGroupsHTML(items,{quota=null}={}){
     const content=rows.length?rows.map(item=>{
       const p=item.p,price=Number(item.price||0);
       return `<button type="button" class="roster-formation-row roster-${rep.toLowerCase()} ${p.outOfListone?"out-of-listone":""}" aria-label="Apri ${escAttr(playerNameText(p))}, ${p.role}, ${p.club}, acquistato a ${fmt(price)} crediti" onclick='openPlayer(${idArg(p.id)})'>
-        <span class="roster-mantra-role">${esc(p.role||"—")}</span>
+        ${mantraRoleChipHTML(p.role,"roster-mantra-role mantra-role-chip")}
         <span class="roster-player-copy"><b>${playerNameHTML(p)}</b><small>${esc(p.club)} · Serie A${p.outOfListone?" · FUORI LISTONE":""}</small></span>
         <span class="roster-player-price"><b>${price?fmt(price):"—"} cr</b><small>acquisto</small><i aria-hidden="true">›</i></span>
       </button>`;
@@ -3802,7 +3788,7 @@ function fa2BuildRecommendedLineup(module=fa2RecommendedLineupModule(),owned=pur
   }
   let best={mask:0,value:0,assign:Array(slots.length).fill(null)};
   for(const [mask,data] of dp){const filled=mask.toString(2).split("1").length-1,bestFilled=best.mask.toString(2).split("1").length-1;if(filled>bestFilled||(filled===bestFilled&&data.value>best.value))best={mask,value:data.value,assign:data.assign}}
-  const starters=best.assign.map((p,index)=>p?{p,slot:slots[index],metric:metrics.get(String(p.id)),index}:null).filter(Boolean),starterIds=new Set(starters.map(row=>String(row.p.id)));
+  const starters=best.assign.map((p,index)=>p?{p,slot:slots[index],metric:metrics.get(String(p.id)),index,line:window.FA2MantraRules?.slotLine?.(module?.name,index)||fa2LineupNaturalMacro(p)}:null).filter(Boolean),starterIds=new Set(starters.map(row=>String(row.p.id)));
   const bench=owned.filter(p=>!starterIds.has(String(p.id))).map(p=>({p,metric:metrics.get(String(p.id))})).sort((a,b)=>Number(a.metric.unavailable)-Number(b.metric.unavailable)||b.metric.score-a.metric.score||b.metric.probability-a.metric.probability);
   starters.forEach(row=>{
     if(row.metric.probability>=70)return;
@@ -3817,10 +3803,10 @@ function fa2RecommendedLineupSourcesHTML(result){
   return `<div class="fa2-lineup-sources"><span>Probabili formazioni <b>${esc(formationDate)}</b></span><span>Disponibilità <b>${esc(availabilityDate)}</b></span><span>Storico verificato <b>${historyCount}/${result.metrics.size}</b></span></div>`;
 }
 function fa2RecommendedLineupHTML(){
-  const result=fa2BuildRecommendedLineup(),groups=["POR","DIF","CEN","ATT"],labels={POR:"Portieri",DIF:"Difensori",CEN:"Centrocampisti",ATT:"Attaccanti"},reg=currentRegulation(),benchSize=Math.max(1,Number(reg?.bench?.size)||7),alternatives=result.bench.slice(0,benchSize);
-  const rowsByGroup=group=>result.starters.filter(row=>fa2LineupNaturalMacro(row.p)===group).map(row=>{const m=row.metric,alt=row.alternative;return `<article class="fa2-lineup-entry"><button type="button" class="fa2-lineup-row" onclick='openPlayer(${idArg(row.p.id)})' aria-label="Apri ${escAttr(row.p.name)}, ruolo ${escAttr(row.p.role)}, probabilità ${m.probability} per cento"><span class="fa2-lineup-role">${esc(row.p.role||row.slot.label)}</span><span class="fa2-lineup-player"><b>${esc(row.p.name)}</b><small>${esc(row.p.club)} · ${esc(row.p.role)}${m.warned?" · DIFFIDATO":""}</small></span><span class="fa2-lineup-score"><b>VAL ${m.score}</b><small>tit. ${m.probability}%</small></span><em class="${m.statusClass}">${esc(m.status)}</em><i aria-hidden="true">›</i></button>${alt?`<button type="button" class="fa2-lineup-direct-alt" onclick='openPlayer(${idArg(alt.p.id)})' aria-label="Apri alternativa ${escAttr(alt.p.name)}, titolarità ${alt.metric.probability} per cento"><span aria-hidden="true">↳</span><small>ALTERNATIVA PIÙ TITOLARE</small><b>${esc(alt.p.name)}</b><em>${esc(alt.p.role)}</em><strong>${alt.metric.probability}%</strong></button>`:""}</article>`}).join("");
+  const result=fa2BuildRecommendedLineup(),allGroups=["POR","DIF","CEN","TRQ","ATT"],groups=allGroups.filter(group=>result.starters.some(row=>row.line===group)),labels={POR:"Portieri",DIF:"Difensori",CEN:"Centrocampisti",TRQ:"Trequarti",ATT:"Attaccanti"},reg=currentRegulation(),benchSize=Math.max(1,Number(reg?.bench?.size)||7),alternatives=result.bench.slice(0,benchSize);
+  const rowsByGroup=group=>result.starters.filter(row=>row.line===group).map(row=>{const m=row.metric,alt=row.alternative,slotRole=row.slot?.roles||row.slot?.label;return `<article class="fa2-lineup-entry"><button type="button" class="fa2-lineup-row" onclick='openPlayer(${idArg(row.p.id)})' aria-label="Apri ${escAttr(row.p.name)}, schierato nello slot ${escAttr(mantraRoleDisplay(slotRole))}, ruoli ${escAttr(mantraRoleDisplay(row.p.role))}, probabilità ${m.probability} per cento">${mantraRoleChipHTML(slotRole,"fa2-lineup-role mantra-role-chip")}<span class="fa2-lineup-player"><b>${esc(row.p.name)}</b><small>${esc(row.p.club)} · ruoli ${esc(mantraRoleDisplay(row.p.role))}${m.warned?" · DIFFIDATO":""}</small></span><span class="fa2-lineup-score"><b>VAL ${m.score}</b><small>tit. ${m.probability}%</small></span><em class="${m.statusClass}">${esc(m.status)}</em><i aria-hidden="true">›</i></button>${alt?`<button type="button" class="fa2-lineup-direct-alt" onclick='openPlayer(${idArg(alt.p.id)})' aria-label="Apri alternativa ${escAttr(alt.p.name)}, ruoli ${escAttr(mantraRoleDisplay(alt.p.role))}, titolarità ${alt.metric.probability} per cento"><span aria-hidden="true">↳</span><small>ALTERNATIVA PIÙ TITOLARE</small><b>${esc(alt.p.name)}</b><em>${esc(mantraRoleDisplay(alt.p.role))}</em><strong>${alt.metric.probability}%</strong></button>`:""}</article>`}).join("");
   const unavailable=[...result.metrics.values()].filter(row=>row.unavailable);
-  return `<section class="fa2-recommended-lineup"><header><div><span>FORMAZIONE CONSIGLIATA · A5.9.2</span><b>${esc(result.module.name)}</b><small>Miglior XI compatibile con il modulo selezionato sopra</small></div><button type="button" class="ghost" onclick="fa2RefreshRecommendedLineup(this)">Aggiorna dati</button></header><div class="fa2-lineup-kpis"><div><span>XI COPERTO</span><b>${result.filled}/${result.total}</b></div><div><span>PROBABILITÀ MEDIA</span><b>${result.averageProbability}%</b></div><div><span>AFFIDABILITÀ</span><b>${result.averageConfidence}%</b></div><div><span>DA VERIFICARE</span><b>${result.doubts}</b></div></div>${fa2RecommendedLineupSourcesHTML(result)}<details open><summary><span>XI consigliato</span><b>${result.filled===result.total?"PRONTO":"INCOMPLETO"}</b><i aria-hidden="true">⌄</i></summary><div class="fa2-lineup-body">${groups.map(group=>`<section class="fa2-lineup-group fa2-${group.toLowerCase()}"><h3><b>${group}</b><span>${labels[group]}</span></h3>${rowsByGroup(group)||'<div class="fa2-lineup-empty">Nessun giocatore compatibile disponibile</div>'}</section>`).join("")}</div></details><details><summary><span>Prime alternative</span><b>${alternatives.length}</b><i aria-hidden="true">⌄</i></summary><div class="fa2-lineup-bench">${alternatives.map(({p,metric:m})=>`<button type="button" onclick='openPlayer(${idArg(p.id)})'><span><b>${esc(p.name)}</b><small>${esc(p.club)} · ${esc(p.role)}</small></span><strong>${m.unavailable?esc(m.status):m.probability+"%"}</strong></button>`).join("")||'<div class="fa2-lineup-empty">Nessuna alternativa disponibile</div>'}</div></details>${unavailable.length?`<div class="fa2-lineup-alert"><b>NON SCHIERABILI ORA</b><span>${unavailable.map(row=>`${esc(row.p.name)} · ${esc(row.status)}${row.recovery?` · ${esc(row.recovery)}`:""}`).join("<br>")}</span></div>`:""}<p class="fa2-lineup-note">Ordine della scelta: statistiche storiche e rendimento, FVM, poi probabilità di titolarità e trend. Infortunati, squalificati e fuori listone sono esclusi; i diffidati restano selezionabili. Un titolare di valore con probabilità sotto il 70% resta nell’XI e, quando esiste, mostra subito l’alternativa compatibile più probabile.</p></section>`;
+  return `<section class="fa2-recommended-lineup"><header><div><span>FORMAZIONE CONSIGLIATA · A6.0.2</span><b>${esc(result.module.name)}</b><small>Miglior XI compatibile con il modulo selezionato sopra</small></div><button type="button" class="ghost" onclick="fa2RefreshRecommendedLineup(this)">Aggiorna dati</button></header><div class="fa2-lineup-kpis"><div><span>XI COPERTO</span><b>${result.filled}/${result.total}</b></div><div><span>PROBABILITÀ MEDIA</span><b>${result.averageProbability}%</b></div><div><span>AFFIDABILITÀ</span><b>${result.averageConfidence}%</b></div><div><span>DA VERIFICARE</span><b>${result.doubts}</b></div></div>${fa2RecommendedLineupSourcesHTML(result)}<details open><summary><span>XI consigliato</span><b>${result.filled===result.total?"PRONTO":"INCOMPLETO"}</b><i aria-hidden="true">⌄</i></summary><div class="fa2-lineup-body">${groups.map(group=>`<section class="fa2-lineup-group fa2-${group.toLowerCase()}"><h3><b>${group}</b><span>${labels[group]}</span></h3>${rowsByGroup(group)||'<div class="fa2-lineup-empty">Nessun giocatore compatibile disponibile</div>'}</section>`).join("")}</div></details><details><summary><span>Prime alternative</span><b>${alternatives.length}</b><i aria-hidden="true">⌄</i></summary><div class="fa2-lineup-bench">${alternatives.map(({p,metric:m})=>`<button type="button" onclick='openPlayer(${idArg(p.id)})'><span><b>${esc(p.name)}</b><small>${esc(p.club)} · ${esc(mantraRoleDisplay(p.role))}</small></span><strong>${m.unavailable?esc(m.status):m.probability+"%"}</strong></button>`).join("")||'<div class="fa2-lineup-empty">Nessuna alternativa disponibile</div>'}</div></details>${unavailable.length?`<div class="fa2-lineup-alert"><b>NON SCHIERABILI ORA</b><span>${unavailable.map(row=>`${esc(row.p.name)} · ${esc(row.status)}${row.recovery?` · ${esc(row.recovery)}`:""}`).join("<br>")}</span></div>`:""}<p class="fa2-lineup-note">Ogni giocatore è mostrato nella linea dello slot realmente occupato nel modulo; sotto il nome restano visibili tutti i suoi ruoli Mantra. Ordine della scelta: statistiche storiche e rendimento, FVM, poi probabilità di titolarità e trend. Infortunati, squalificati e fuori listone sono esclusi; i diffidati restano selezionabili. Un titolare di valore con probabilità sotto il 70% resta nell’XI e, quando esiste, mostra subito l’alternativa compatibile più probabile.</p></section>`;
 }
 async function fa2RefreshRecommendedLineup(button){
   if(button){button.disabled=true;button.textContent="Aggiorno…"}
@@ -4586,7 +4572,7 @@ function fa2RegulationCard(){
   const scoringSection=`<div class="fa2-reg-grid"><label>Fonte voti<select id="fa2RegScoreSource"><option value="fantacalcio" ${reg.scoring.source==="fantacalcio"?"selected":""}>Fantacalcio</option><option value="italia" ${reg.scoring.source==="italia"?"selected":""}>Italia</option><option value="statistical" ${reg.scoring.source==="statistical"?"selected":""}>Statistico (Alvin 482)</option></select></label></div><p class="fa2-reg-help">Le statistiche disponibili modificano TARGET, alternative e valore dei profili; i dati mancanti restano neutrali.</p>${fa2RegBonusGrid(reg)}`;
   const thresholdSection=`<div class="fa2-reg-grid"><label>Soglia primo gol<input id="fa2RegFirstGoal" type="number" step="0.5" value="${reg.scoring.goalThreshold.firstGoal}"></label><label>Punti per fascia<input id="fa2RegGoalStep" type="number" min="0.5" step="0.5" value="${reg.scoring.goalThreshold.step}"></label></div><div class="fa2-reg-condition-grid"><div><label class="fa2-check"><input id="fa2RegLimitWin" type="checkbox" ${reg.scoring.limitWin.enabled?"checked":""}><span>Limita vittoria</span></label><label>Differenza ≤<input id="fa2RegLimitWinDelta" type="number" min="0" step="0.5" value="${reg.scoring.limitWin.delta}"></label></div><div><label class="fa2-check"><input id="fa2RegLimitDraw" type="checkbox" ${reg.scoring.limitDraw.enabled?"checked":""}><span>Limita pareggio</span></label><label>Differenza ≥<input id="fa2RegLimitDrawDelta" type="number" min="0" step="0.5" value="${reg.scoring.limitDraw.delta}"></label></div><div><label class="fa2-check"><input id="fa2RegAutoGoal" type="checkbox" ${reg.scoring.autoGoal.enabled?"checked":""}><span>Autogol avversario</span></label><label>Soglia<input id="fa2RegAutoGoalThreshold" type="number" min="0" step="0.5" value="${reg.scoring.autoGoal.threshold}"></label></div></div>`;
   const modifiersSection=`<div class="fa2-reg-toggle-grid"><label class="fa2-check"><input id="fa2RegDFactor" type="checkbox" ${reg.modifiers.dFactor.enabled?"checked":""}><span>D Factor</span></label><label class="fa2-check"><input id="fa2RegDFactorGk" type="checkbox" ${reg.modifiers.dFactor.includeGoalkeeper?"checked":""}><span>Include portiere</span></label></div><div class="fa2-reg-grid"><label>Preset D Factor<select id="fa2RegDFactorPreset"><option value="recommended" ${reg.modifiers.dFactor.preset==="recommended"?"selected":""}>Consigliata</option><option value="custom" ${reg.modifiers.dFactor.preset==="custom"?"selected":""}>Personalizzata</option></select></label><label>Applica a<select id="fa2RegDFactorApply"><option value="own" ${reg.modifiers.dFactor.applyTo==="own"?"selected":""}>Propria squadra</option><option value="opponent" ${reg.modifiers.dFactor.applyTo==="opponent"?"selected":""}>Avversario</option></select></label></div>${fa2RegDFactorBands(reg)}<div class="fa2-reg-toggle-grid"><label class="fa2-check"><input id="fa2RegPerformance" type="checkbox" ${reg.modifiers.performance.enabled?"checked":""}><span>Fattore rendimento</span></label><label class="fa2-check"><input id="fa2RegFair" type="checkbox" ${reg.modifiers.fairplay.enabled?"checked":""}><span>Fattore fairplay</span></label><label class="fa2-check"><input id="fa2RegCaptain" type="checkbox" ${reg.modifiers.captain.enabled?"checked":""}><span>Fattore capitano</span></label><label>Bonus fairplay<input id="fa2RegFairBonus" type="number" step="0.5" value="${reg.modifiers.fairplay.bonus}"></label></div><div class="fa2-reg-pending"><b>Specifiche ancora mancanti</b><span>Soglie dettagliate di Fattore rendimento, Capitano e competizioni F1 non vengono inventate. I toggle sono salvati; l'asta usa soltanto affidabilità e voto storico.</span></div>`;
-  return `<div class="card fa2-reg-settings-card"><div class="fa2-reg-settings-head"><div><span>FANTAASTA2.0 · REGOLAMENTO LEGA</span><h3>Regolamento Lega</h3><p>Un'unica configurazione alimenta Strategy Engine, budget e Asta Live senza modificare i dati dell'asta.</p></div><b>α6.0.0</b></div>
+  return `<div class="card fa2-reg-settings-card"><div class="fa2-reg-settings-head"><div><span>FANTAASTA2.0 · REGOLAMENTO LEGA</span><h3>Regolamento Lega</h3><p>Un'unica configurazione alimenta Strategy Engine, budget e Asta Live senza modificare i dati dell'asta.</p></div><b>α6.0.2</b></div>
     <div class="fa2-reg-mini"><div><span>Partecipanti</span><b>${sum.participants}</b></div><div><span>Bacino</span><b>${sum.analysisPool}</b></div><div><span>Budget</span><b>${sum.budget}</b></div><div><span>Rosa</span><b>${sum.roster}</b></div><div><span>Under</span><b>${sum.under}</b></div><div><span>Switch</span><b>${String(sum.switchMode).toUpperCase()}</b></div><div><span>Voti</span><b>${sum.scoringSource}</b></div><div><span>Gol</span><b>${sum.goalBands}</b></div></div>
     <details id="fa2RegDetails" class="fa2-reg-details"><summary>Apri Regolamento Lega</summary><div class="fa2-reg-studio">
       ${fa2RegStudioSection("Lega e asta",`${sum.participants} partecipanti · ${sum.availability} · ${sum.mode}`,leagueSection,true)}
@@ -4768,7 +4754,7 @@ function lockInit(){
   $("#unlockBtn").onclick=()=>{if($("#pinInput").value===state.pin)$("#lock").classList.add("hidden");else $("#lockText").textContent="PIN errato. Riprova."};
 }
 fa2MigrateRegulationParticipantsFromLeague();ensureInitialSnapshot();refresh();lockInit();
-if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=2.0.0-alpha.6.0.0").catch(()=>{}));
+if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=2.0.0-alpha.6.0.2").catch(()=>{}));
 
 /* =========================================================
    FantaAsta2.0 alpha 3.9 — Module Switch Advisor

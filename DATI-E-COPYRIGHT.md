@@ -1,6 +1,6 @@
 # FantaAsta2.0 — gestione locale dei dati
 
-La versione A6.0.0 non contiene listoni, statistiche, probabili formazioni,
+La versione A6.0.2 non contiene listoni, statistiche, probabili formazioni,
 indisponibili o altri database di terzi. Non esegue scraping e non aggiorna
 automaticamente dati sportivi.
 

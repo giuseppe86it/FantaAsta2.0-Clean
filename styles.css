@@ -3853,3 +3853,47 @@ textarea:focus-visible{
 .fa2-lineup-empty{padding:13px;color:#8297aa;font-size:9px;text-align:center}.fa2-lineup-alert{display:grid;gap:4px;margin:0 11px 11px;padding:10px;border:1px solid #8c4a5b;border-radius:11px;background:#3b2028}.fa2-lineup-alert b{color:#ff9ab0;font-size:8px;letter-spacing:.07em}.fa2-lineup-alert span{color:#dfb7c0;font-size:9px;line-height:1.45}.fa2-lineup-note{margin:0;padding:0 13px 13px;color:#8fa4b5;font-size:8px;line-height:1.45}
 @media(min-width:720px){.fa2-lineup-body{grid-template-columns:1fr 1fr;align-items:start}}
 @media(max-width:540px){.fa2-recommended-lineup>header{display:grid}.fa2-recommended-lineup>header button{width:100%}.fa2-lineup-kpis{grid-template-columns:1fr 1fr}.fa2-lineup-sources{grid-template-columns:1fr}.fa2-lineup-row{grid-template-columns:52px minmax(0,1fr) 58px 12px}.fa2-lineup-row>em{grid-column:2/4;justify-self:start}.fa2-lineup-direct-alt{grid-template-columns:18px minmax(0,1fr) auto}.fa2-lineup-direct-alt small{grid-column:2/4}.fa2-lineup-direct-alt b{grid-column:2}.fa2-lineup-direct-alt em{display:none}.fa2-lineup-direct-alt strong{grid-column:3;grid-row:2}.fa2-lineup-bench{grid-template-columns:1fr}}
+
+/* A6.0.2 — grammatica visiva Mantra 2026/27.
+   Le sigle restano sempre presenti: il colore è un rinforzo, non l'unico segnale. */
+:root{
+  --mantra-por:#f3a62b;
+  --mantra-dif:#67ad2d;
+  --mantra-cen:#2676d8;
+  --mantra-trq:#c91aa8;
+  --mantra-att:#d92546;
+}
+.mantra-role-chip{display:inline-grid;min-width:42px;min-height:28px;place-items:center;padding:4px 7px;border:1px solid transparent;border-radius:8px;color:#fff;font-size:9px;font-weight:950;line-height:1.1;letter-spacing:.025em;text-align:center;text-shadow:0 1px 2px #0008;white-space:nowrap}
+.role-tone-por{border-color:#ffc65c!important;background:#7a4b08!important;color:#fff3d2!important}
+.role-tone-dif{border-color:#86d54a!important;background:#285c16!important;color:#f2ffe8!important}
+.role-tone-cen{border-color:#61a6ff!important;background:#174d98!important;color:#eef6ff!important}
+.role-tone-trq{border-color:#f05ed7!important;background:#80106e!important;color:#fff1fd!important}
+.role-tone-att{border-color:#ff7087!important;background:#861b31!important;color:#fff1f4!important}
+.role-tone-dif-cen{border-color:#84cfdd!important;background:linear-gradient(110deg,#285c16 0 47%,#174d98 53% 100%)!important;color:#fff!important}
+.role-tone-cen-trq{border-color:#b58bf4!important;background:linear-gradient(110deg,#174d98 0 47%,#80106e 53% 100%)!important;color:#fff!important}
+.role-tone-trq-att{border-color:#f477bd!important;background:linear-gradient(110deg,#80106e 0 47%,#861b31 53% 100%)!important;color:#fff!important}
+.role-tone-cen-att{border-color:#b684d7!important;background:linear-gradient(110deg,#174d98 0 47%,#861b31 53% 100%)!important;color:#fff!important}
+.role-tone-neutral{border-color:#64778b!important;background:#2b394a!important;color:#f2f6fa!important}
+
+/* Rosa: il titolo resta il reparto Classic usato per quote e budget;
+   ogni tessera giocatore usa invece il suo ruolo Mantra reale. */
+.roster-por>header b{border-color:#ffc65c;background:#7a4b08;color:#fff3d2}
+.roster-dif>header b{border-color:#86d54a;background:#285c16;color:#f2ffe8}
+.roster-cen>header b{border-color:#61a6ff;background:#174d98;color:#eef6ff}
+.roster-att>header b{border-color:#ef659f;background:linear-gradient(110deg,#80106e,#861b31);color:#fff1f7}
+
+/* Formazione consigliata: colori per linea e colori per lo slot effettivo. */
+.fa2-lineup-group.fa2-por>h3 b{border-color:#ffc65c;background:#7a4b08;color:#fff3d2}
+.fa2-lineup-group.fa2-dif>h3 b{border-color:#86d54a;background:#285c16;color:#f2ffe8}
+.fa2-lineup-group.fa2-cen>h3 b{border-color:#61a6ff;background:#174d98;color:#eef6ff}
+.fa2-lineup-group.fa2-trq>h3 b{border-color:#f05ed7;background:#80106e;color:#fff1fd}
+.fa2-lineup-group.fa2-att>h3 b{border-color:#ff7087;background:#861b31;color:#fff1f4}
+
+/* Probabili formazioni e scheda: stessa tavolozza delle rose. */
+.formation-detail-por .formation-detail-role{border-color:#ffc65c;background:#7a4b08;color:#fff3d2}
+.formation-detail-dif .formation-detail-role{border-color:#86d54a;background:#285c16;color:#f2ffe8}
+.formation-detail-cen .formation-detail-role{border-color:#61a6ff;background:#174d98;color:#eef6ff}
+.formation-detail-att .formation-detail-role{border-color:#ef659f;background:linear-gradient(110deg,#80106e,#861b31);color:#fff1f7}
+.line>.mantra-role-chip{justify-self:end}
+.mantra-role-chip:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media(forced-colors:active){.mantra-role-chip{border:2px solid ButtonText!important;background:Canvas!important;color:CanvasText!important;text-shadow:none}}

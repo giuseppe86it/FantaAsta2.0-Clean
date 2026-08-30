@@ -1,9 +1,9 @@
 const CACHE_PREFIX="fantaasta2-";
-const CACHE="fantaasta2-v2.0.0-alpha.6.0.0";
+const CACHE="fantaasta2-v2.0.0-alpha.6.0.2";
 const ASSETS=[
-  "./","./index.html","./styles.css?v=2.0.0-alpha.6.0.0","./app.js?v=2.0.0-alpha.6.0.0",
-  "./regulation-engine.js?v=2.0.0-alpha.6.0.0","./strategy-engine.js?v=2.0.0-alpha.6.0.0","./opponent-intelligence-engine.js?v=2.0.0-alpha.6.0.0",
-  "./listone-template.csv","./DATI-E-COPYRIGHT.md","./README-A6.0.0-CLEAN-DATA.md",
+  "./","./index.html","./styles.css?v=2.0.0-alpha.6.0.2","./app.js?v=2.0.0-alpha.6.0.2",
+  "./regulation-engine.js?v=2.0.0-alpha.6.0.2","./strategy-engine.js?v=2.0.0-alpha.6.0.2","./opponent-intelligence-engine.js?v=2.0.0-alpha.6.0.2","./listone-importer.js?v=2.0.0-alpha.6.0.2","./mantra-rules.js?v=2.0.0-alpha.6.0.2",
+  "./listone-template.csv","./DATI-E-COPYRIGHT.md","./README-A6.0.2-CLEAN-DATA.md",
   "./manifest.webmanifest","./icon-192.png","./icon-512.png","./apple-touch-icon.png","./favicon-32.png"
 ];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
