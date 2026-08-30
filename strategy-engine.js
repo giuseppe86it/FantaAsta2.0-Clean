@@ -1,8 +1,8 @@
-/* FantaAsta2.0 — Strategy Engine A7.0.0
+/* FantaAsta2.0 — Strategy Engine A7.0.1
    Usa esclusivamente FVM, quotazione, ruoli e anagrafica presenti nel
    Listone scelto manualmente dall'utente, più i parametri d'asta. */
 (function(){
-  const ENGINE_VERSION="A7.0.0";
+  const ENGINE_VERSION="A7.0.1";
   const STORAGE_KEY="fa2_strategy_v2";
   const LEGACY_KEY="fa2_strategy_v1";
   const MODULES=[

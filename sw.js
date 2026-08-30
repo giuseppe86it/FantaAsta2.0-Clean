@@ -1,9 +1,9 @@
 const CACHE_PREFIX="fantaasta2-";
-const CACHE="fantaasta2-v2.0.0-alpha.7.0.0";
+const CACHE="fantaasta2-v2.0.0-alpha.7.0.1";
 const ASSETS=[
-  "./","./index.html","./styles.css?v=2.0.0-alpha.7.0.0","./app.js?v=2.0.0-alpha.7.0.0",
-  "./regulation-engine.js?v=2.0.0-alpha.7.0.0","./strategy-engine.js?v=2.0.0-alpha.7.0.0","./opponent-intelligence-engine.js?v=2.0.0-alpha.7.0.0","./listone-importer.js?v=2.0.0-alpha.7.0.0","./mantra-rules.js?v=2.0.0-alpha.7.0.0",
-  "./listone-template.csv","./DATI-E-COPYRIGHT.md","./PRIVACY-LOCALE.md","./NOTICE.md","./README-A7.0.0-GESTIONE-ASTA.md",
+  "./","./index.html","./styles.css?v=2.0.0-alpha.7.0.1","./app.js?v=2.0.0-alpha.7.0.1",
+  "./regulation-engine.js?v=2.0.0-alpha.7.0.1","./strategy-engine.js?v=2.0.0-alpha.7.0.1","./opponent-intelligence-engine.js?v=2.0.0-alpha.7.0.1","./listone-importer.js?v=2.0.0-alpha.7.0.1","./mantra-rules.js?v=2.0.0-alpha.7.0.1",
+  "./listone-template.csv","./DATI-E-COPYRIGHT.md","./PRIVACY-LOCALE.md","./NOTICE.md","./README-A7.0.1-GESTIONE-ASTA.md",
   "./manifest.webmanifest","./icon-192.png","./icon-512.png","./apple-touch-icon.png","./favicon-32.png"
 ];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
