@@ -3921,3 +3921,61 @@ input,select,textarea{min-height:44px}
 dialog::backdrop{background:rgba(0,8,18,.82);backdrop-filter:blur(4px)}
 @media(max-width:620px){.fa2-slot-lab-head{display:grid}.fa2-slot-lab-head>button{width:100%}.live-dialog-actions{align-items:stretch;flex-direction:column-reverse}.live-dialog-actions button{width:100%}}
 @media(forced-colors:active){.player-preference-badge,.fa2-candidate-why,.live-strategy-signal.manual{border:2px solid ButtonText!important;background:Canvas!important;color:CanvasText!important}}
+
+/* A8.0.1 — Listone locale: impaginazione stabile su iPhone.
+   Il riepilogo occupa sempre una riga propria; i comandi non possono
+   comprimere il testo informativo in una colonna troppo stretta. */
+.listone-sync-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-items:stretch;
+  gap:14px;
+  padding:16px;
+}
+.listone-sync-copy{
+  display:grid;
+  min-width:0;
+  gap:4px;
+}
+.listone-sync-copy b{
+  margin:0;
+  font-size:17px;
+  line-height:1.22;
+  overflow-wrap:normal;
+  word-break:normal;
+}
+.listone-sync-copy small{
+  margin:0;
+  font-size:11px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.listone-local-actions{
+  display:grid;
+  grid-template-columns:minmax(0,1.35fr) repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:8px;
+  width:100%;
+  min-width:0;
+}
+.listone-sync-btn,.listone-local-copy{
+  display:grid;
+  width:100%;
+  min-width:0;
+  min-height:46px;
+  place-items:center;
+  padding:10px 9px;
+  line-height:1.2;
+  white-space:normal;
+}
+@media(max-width:700px){
+  .listone-sync-card{gap:12px;padding:14px}
+  .listone-local-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .listone-sync-btn{grid-column:1/-1}
+}
+@media(max-width:350px){
+  .listone-sync-copy b{font-size:15px}
+  .listone-sync-copy small{font-size:10px}
+  .listone-local-actions{grid-template-columns:minmax(0,1fr)}
+  .listone-sync-btn{grid-column:auto}
+}

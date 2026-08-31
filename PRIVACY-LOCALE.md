@@ -1,4 +1,4 @@
-# Privacy locale — FantaAsta 2.0 A8.0.0
+# Privacy locale — FantaAsta 2.0 A8.0.1
 
 L'app funziona senza account, telemetria, pubblicità o invio automatico di dati.
 
