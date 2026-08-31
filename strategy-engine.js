@@ -1,8 +1,8 @@
-/* FantaAsta2.0 — Strategy Engine A7.0.1
+/* FantaAsta2.0 — Strategy Engine A8.0.0
    Usa esclusivamente FVM, quotazione, ruoli e anagrafica presenti nel
    Listone scelto manualmente dall'utente, più i parametri d'asta. */
 (function(){
-  const ENGINE_VERSION="A7.0.1";
+  const ENGINE_VERSION="A8.0.0";
   const STORAGE_KEY="fa2_strategy_v2";
   const LEGACY_KEY="fa2_strategy_v1";
   const MODULES=[
@@ -352,8 +352,10 @@
     const fvm=Math.max(0,Number(p?.fvm)||0),price=basePrice(p,ctx);
     const matching=(module?.slots||[]).filter(roles=>compatible(p,roles)).length;
     const fit=clamp(matching/Math.max(1,(module?.slots||[]).length)*420);
+    const preference=String(ctx?.playerPreference?.(p)||"neutral");
+    const preferenceAdjustment=preference==="high"?12:preference==="prefer"?6:preference==="avoid"?-70:0;
     return clamp(clamp(Math.sqrt(fvm/Math.max(1,maxFvm))*100)*.55
-      +clamp(Math.sqrt(price/Math.max(1,maxPrice))*100)*.25+fit*.20);
+      +clamp(Math.sqrt(price/Math.max(1,maxPrice))*100)*.25+fit*.20+preferenceAdjustment);
   }
   function moduleAnalysisPool(players,reg,ctx,module){
     const eligible=(players||[]).filter(p=>isAvailable(p,ctx)),limits=analysisLimits(reg);
@@ -398,9 +400,11 @@
     const youth=env.underRules.length?100*underMatches/env.underRules.length:50;
     const historyScore=0,historyReliability=0,regulationAdjustment=0;
     const baseIntelligence=clamp(fvmScore*.55+pricePower*.25+flex*.15+youth*.05);
-    const intelligence=baseIntelligence;
+    const preference=String(env.ctx?.playerPreference?.(p)||"neutral");
+    const preferenceAdjustment=preference==="high"?12:preference==="prefer"?6:preference==="avoid"?-70:0;
+    const intelligence=clamp(baseIntelligence+preferenceAdjustment);
     const efficiency=clamp(68+(intelligence-pricePower)*.48);
-    return {intelligence,baseIntelligence,historyScore,historyReliability,regulationAdjustment,starter:intelligence,flex,youth,fvmScore,pricePower,efficiency,price,fvm};
+    return {intelligence,baseIntelligence,historyScore,historyReliability,regulationAdjustment,preference,preferenceAdjustment,starter:intelligence,flex,youth,fvmScore,pricePower,efficiency,price,fvm};
   }
   function slotCandidatePool(roles,env){
     const cacheKey=roles.slice().sort().join("/");
@@ -742,13 +746,15 @@
         score:round(auctionScore),intelligence:round(m.intelligence),starter:round(m.starter),
         history:round(m.historyScore),historyReliability:round(m.historyReliability),efficiency:round(m.efficiency),
         flexibility:round(m.flex),youth:round(m.youth),bridge:round(bridge),neutralMax:round(m.price),valueScore:round(valueScore),
+        preference:m.preference||"neutral",preferenceAdjustment:round(m.preferenceAdjustment||0),
         assigned:!isAvailable(p,env.ctx),player:p,m
       };
     }).sort((a,b)=>b.score-a.score||b.history-a.history||b.starter-a.starter||b.fvm-a.fvm);
-    const target=enriched[0]||null;
-    const alternatives=enriched.slice(1,4);
+    const operational=enriched.filter(x=>x.preference!=="avoid");
+    const target=operational[0]||null;
+    const alternatives=operational.slice(1,4);
     const reserved=new Set([target,...alternatives].filter(Boolean).map(x=>String(x.id)));
-    const values=enriched.filter(x=>!reserved.has(String(x.id))).sort((a,b)=>b.valueScore-a.valueScore||b.score-a.score).slice(0,3);
+    const values=operational.filter(x=>!reserved.has(String(x.id))).sort((a,b)=>b.valueScore-a.valueScore||b.score-a.score).slice(0,3);
     if(target)target.maxRecommended=recommendedMaxForCandidate(target,moduleResult,roles,row,env.reg,'target');
     alternatives.forEach((x,i)=>{x.altRank=i+1;x.maxRecommended=recommendedMaxForCandidate(x,moduleResult,roles,row,env.reg,'alt')});
     values.forEach(x=>{x.maxRecommended=recommendedMaxForCandidate(x,moduleResult,roles,row,env.reg,'value')});
@@ -759,7 +765,7 @@
     const priority={score:priorityScore,label:priorityScore>=55?'ALTA':priorityScore>=30?'MEDIA':'BASSA'};
     return {
       key:slotKey(roles),roles:roles.slice(),row,budget,minimumScore,priority,target,alternatives,values,
-      candidates:enriched.slice(0,12),secondaryModule:secondaryModule?.name||'',
+      candidates:operational.slice(0,12),excludedByUser:enriched.filter(x=>x.preference==="avoid").length,secondaryModule:secondaryModule?.name||'',
       summary:{scarcity:row.scarcity,strongCount:row.strongCount,depth:row.depth,quality:row.quality,starter:row.starter,history:row.history,historyCoverage:row.historyCoverage}
     };
   }
